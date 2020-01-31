@@ -10,7 +10,8 @@
 // ntp client from https://github.com/gmag11/NtpClient
 // cidla kabel hneda +5V; zelena GND; zluta DATA
 // Jiri Liska, liska.tbn@gmail.com, Trebon, Czech Rep.
-//20190408001
+// new hardware
+//20200131001
 #include "WiFi.h"
 #include "ESPAsyncWebServer.h"
 #include "OneWire.h"
@@ -20,43 +21,41 @@
 
 //<SETUP>
 const byte DallasPin=19;
+const byte DallasPowerPin=33;
 const byte LED=13; 
 const bool WebServerOn=1;
 const bool WebServer1On=0;
-const String deviceName="01_Skleniky leva strana (zapadni)";
+const String deviceName="02_Skleniky prava strana (vychodni)";
 //<SENSOR1>
 const bool Sensor1=1;
-DeviceAddress internal1Adr={0x28,0xff,0xe,0xf8,0x40,0x18,0x3,0xce};
-const String Sensor1Place="Teplota chodba leva: ";
+//DeviceAddress internal1Adr={0x28,0xaa,0x96,0x83,0x1d,0x13,0x2,0xa8};
+DeviceAddress internal1Adr={0x28,0xaa,0x43,0x84,0x1d,0x13,0x2,0xa2};
+const String Sensor1Place="Teplota chodba prava: ";
 //</SENSOR1>
 //<SENSOR2>
 const bool Sensor2=1;
-DeviceAddress external2Adr={0x28,0xff,0x13,0xfa,0x40,0x18,0x3,0x59};
-const String Sensor2Place="Teplota koje zimovani (sever): ";
+//DeviceAddress external2Adr={0x28,0xaa,0x43,0x84,0x1d,0x13,0x2,0xa2};
+DeviceAddress external2Adr={0x28,0xaa,0x96,0x83,0x1d,0x13,0x2,0xa8};
+const String Sensor2Place="Teplota koje krajni sever: ";
 //</SENSOR2>
 //<SENSOR3>
 const bool Sensor3=1;
-DeviceAddress external3Adr={0x28,0xff,0xf2,0xf3,0x40,0x18,0x3,0xdd};
-const String Sensor3Place="<br>Teplota venkovni sever: ";
-const float calibration3=-0.31;
+DeviceAddress external3Adr={0x28,0xff,0x36,0xa0,0x42,0x18,0x1,0x43};
+//0x30,0x1f,0xfb,0x3f,0x40,0x3c,0xfc,0x3f
+const String Sensor3Place="Teplota koje krajni jih: ";
+const float calibration3=0.0;
 //</SENSOR3>
-//<SENSOR4>
-const bool Sensor4=1;
-DeviceAddress external4Adr={0x28,0xaa,0xaf,0xcb,0x1d,0x13,0x2,0x23};
-const String Sensor4Place="Teplota koje krajni jih: ";
-const float calibration4=0.0;
-//</SENSOR4>
 int counter;
 const float tempLimit=5.0;
 float t1=-99.0, t2=-99.0,t3=-99.0,t4=-99.0;
 String bcgcolor="red";
 //<WIFICLIENT>
-const bool CLIENT=1;
+bool CLIENT=1;
 const char *ssid = "BUArealBridge";
 const char *password = "************";
 //</WIFICLIENT>
 //<WIFISERVER>
-const bool AP=0;
+bool AP=0;
 const char* APssid="TermAP";
 const char* APpassword="************";
 IPAddress APIP(192,168,60,1);
@@ -67,9 +66,10 @@ const IPAddress IPMask(255,255,255,0);
 String tempWeb="not connected";
 String tempWebFin="not connected";
 String head01="<!DOCTYPE html>\n <html>\n <head>\n <meta http-equiv=\"refresh\" content=\"15\" />\n <meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\" /> \n <title>"+deviceName+"</title>\n </head>\n <body style=background-color:";
+//String head01="<!DOCTYPE html>\n <html>\n <head>\n <meta http-equiv=\"refresh\" content=\"15\" />\n <title>"+deviceName+"</title>\n </head>\n <body style=background-color:";
 const String tail03="</h1> \n </body>\n </html>\n";
-//</WEBSERVER>
 const bool Debug=0;
+//</WEBSERVER>
 //</SETUP>
 
 OneWire DallasOW(DallasPin);  //create instance Onewire
@@ -126,14 +126,28 @@ void setBackgroundColor(float measTemp){
   if(tt<(-120.0)){
     counter++;
     if(counter>5) ESP.restart(); 
-    }
+  }
  }
  
 void setup(){
+if(Debug){
+    AP=1; 
+    CLIENT=0;
+    head01="<!DOCTYPE html>\n <html>\n <head>\n \n <title>"+deviceName+"</title>\n </head>\n <body style=background-color:";
+  }
 Serial.begin(115200);
 pinMode(LED, OUTPUT);
-delay(1000); 
+pinMode(DallasPowerPin, OUTPUT); 
 digitalWrite(LED, LOW);
+//Dallas reset
+pinMode(DallasPowerPin, OUTPUT);
+pinMode(DallasPin, OUTPUT);
+digitalWrite(DallasPowerPin, LOW);
+digitalWrite(DallasPin, LOW);
+delay(1000);
+digitalWrite(DallasPowerPin, HIGH);
+pinMode(DallasPin, INPUT);
+//end of Dallas reset
 NTP.begin ("147.231.248.1", 1, true);
 
 //WiFi.mode(WIFI_AP_STA);
@@ -190,10 +204,10 @@ void loop(){
     if(WiFi.status()!= WL_CONNECTED) ESP.restart();
   }
     else digitalWrite(LED, HIGH);
+  t1=nactiTeplotuAddr(internal1Adr);
   tempWeb="<h1> \n"+NTP.getTimeDateString()+" Signal: "+WiFi.RSSI()+"    Dev: "+deviceName;
   delay(10);
   if(Sensor1){
-      t1=nactiTeplotuAddr(internal1Adr);
       tempWeb+="\n <br>"+Sensor1Place;
       tempWeb+="     ";
       tempWeb+=String(t1,2)+" &deg;C"; 
@@ -205,29 +219,18 @@ void loop(){
     tempWeb+="     ";
     tempWeb+=String(t2,2)+" &deg;C";
     }
-  if(Sensor4){
-    delay(10);
-    t4=nactiTeplotuAddr(external4Adr);
-    t4+=calibration4;
-    tempWeb+="\n <br>"+Sensor4Place;
-    tempWeb+="     ";
-    tempWeb+=String(t4,2)+" &deg;C"; 
-    }
-  if(Sensor3){
+ if(Sensor3){
     delay(10);
     t3=nactiTeplotuAddr(external3Adr);
-    t3+=calibration3;
+    t3-=calibration3;
     tempWeb+="\n <br>"+Sensor3Place;
     tempWeb+="     ";
     tempWeb+=String(t3,2)+" &deg;C"; 
     }
-
-  readingTempCorrect(t1);
+  readingTempCorrect(t1);//check if temp is in normal interval
   readingTempCorrect(t2);
-  readingTempCorrect(t3);
-  readingTempCorrect(t4);
-  
-  setBackgroundColor(t1,t2,t4);
+  readingTempCorrect(t3); 
+  setBackgroundColor(t1,t2,t3);
   if(Debug){
     DallasOW.reset_search();
     tempWeb+="</h1> \n <br>"+searchAddr()+"\n <br>"+searchAddr()+"\n <br>"+searchAddr()+"\n <br>"+searchAddr()+"\n <br>"+searchAddr();
