@@ -1,2 +1,3 @@
 # TempSkleniky
- device to temperature monitoring by http
+temperature monitoring by http using esp32
+
