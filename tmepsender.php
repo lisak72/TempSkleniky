@@ -19,6 +19,7 @@ function getStringBetween($str,$from,$to)
     $sub = substr($str, strpos($str,$from)+strlen($from),strlen($str));
     return substr($sub,0,strpos($sub,$to));
 }
+if($contents!=FALSE && $contents!=""){
 $contents=trim($contents);
 $contents=floatval($contents);
 //echo $contents;  //in contents is now variable number of outside temperature - number in C grad
@@ -28,5 +29,6 @@ $response=stream_get_contents($handle2);
 fclose($handle2);
 
 echo $response;
+} //end of if
 exit
 ?>
