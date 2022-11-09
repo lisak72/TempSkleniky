@@ -13,11 +13,14 @@
 // new hardware
 //20200131001
 #include "WiFi.h"
+#include "AsyncTCP.h"
 #include "ESPAsyncWebServer.h"
 #include "OneWire.h"
 #include "DallasTemperature.h"
 #include <TimeLib.h> //TimeLib library is needed https://github.com/PaulStoffregen/Time
 #include <NtpClientLib.h> //Include NtpClient library header  https://github.com/gmag11/NtpClient
+#include "passwords.h"
+//#include <NTPClient.h>
 
 //<SETUP>
 const byte DallasPin=19;
@@ -51,8 +54,8 @@ float t1=-99.0, t2=-99.0,t3=-99.0,t4=-99.0;
 String bcgcolor="red";
 //<WIFICLIENT>
 bool CLIENT=1;
-const char *ssid = "BUArealBridge";
-const char *password = "************";
+//const char *ssid = "BUArealBridge";
+//const char *password = "************";
 //</WIFICLIENT>
 //<WIFISERVER>
 bool AP=0;
@@ -69,6 +72,7 @@ String head01="<!DOCTYPE html>\n <html>\n <head>\n <meta http-equiv=\"refresh\" 
 //String head01="<!DOCTYPE html>\n <html>\n <head>\n <meta http-equiv=\"refresh\" content=\"15\" />\n <title>"+deviceName+"</title>\n </head>\n <body style=background-color:";
 const String tail03="</h1> \n </body>\n </html>\n";
 const bool Debug=0;
+const bool debug=Debug;
 //</WEBSERVER>
 //</SETUP>
 
@@ -135,7 +139,7 @@ if(Debug){
     CLIENT=0;
     head01="<!DOCTYPE html>\n <html>\n <head>\n \n <title>"+deviceName+"</title>\n </head>\n <body style=background-color:";
   }
-Serial.begin(115200);
+if(debug) Serial.begin(115200);
 pinMode(LED, OUTPUT);
 pinMode(DallasPowerPin, OUTPUT); 
 digitalWrite(LED, LOW);
@@ -148,7 +152,7 @@ delay(1000);
 digitalWrite(DallasPowerPin, HIGH);
 pinMode(DallasPin, INPUT);
 //end of Dallas reset
-NTP.begin ("147.231.248.1", 1, true);
+NTP.begin ("ntp.nic.cz", 1, true);
 
 //WiFi.mode(WIFI_AP_STA);
 WiFi.mode(WIFI_STA);
@@ -158,7 +162,7 @@ if(CLIENT){
     while(WiFi.status()!= WL_CONNECTED)
       {
     delay(500);
-    Serial.print(".");
+    if(debug) Serial.print(".");
     blinkLed();
     counter++;
     if(counter>50) ESP.restart(); 
@@ -169,14 +173,14 @@ if(CLIENT){
 if(AP){
   WiFi.softAP(APssid,APpassword);
   WiFi.softAPConfig(APIP, APGW, IPMask);
-  Serial.println(WiFi.softAPIP());
+  if(debug) Serial.println(WiFi.softAPIP());
   }
 
 digitalWrite(LED, HIGH); //IF WL CONNECTED
- Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+ if(debug) Serial.println("");
+  if(debug) Serial.println("WiFi connected");
+  if(debug) Serial.println("IP address: ");
+  if(debug) Serial.println(WiFi.localIP());
   
 Sensors.begin(); //start comm with Dallas sensor
 
