@@ -54,13 +54,13 @@ float t1=-99.0, t2=-99.0,t3=-99.0,t4=-99.0;
 String bcgcolor="red";
 //<WIFICLIENT>
 bool CLIENT=1;
-//const char *ssid = "BUArealBridge";
+//const char *ssid = "BUArealBridge";  //defined in passwords.h
 //const char *password = "************";
 //</WIFICLIENT>
 //<WIFISERVER>
 bool AP=0;
-const char* APssid="TermAP";
-const char* APpassword="************";
+//const char* APssid="TermAP";  //defined in passwords.h
+//const char* APpassword="************";
 IPAddress APIP(192,168,60,1);
 IPAddress APGW(192,168,60,1);
 const IPAddress IPMask(255,255,255,0);
