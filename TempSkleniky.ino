@@ -152,7 +152,7 @@ delay(1000);
 digitalWrite(DallasPowerPin, HIGH);
 pinMode(DallasPin, INPUT);
 //end of Dallas reset
-NTP.begin ("ntp.nic.cz", 1, true);
+
 
 //WiFi.mode(WIFI_AP_STA);
 WiFi.mode(WIFI_STA);
@@ -191,6 +191,8 @@ if(WebServerOn){
   }); 
   server.begin();
 }
+
+NTP.begin ("ntp.nic.cz", 1, true);
 
 if(WebServer1On){  
   server1.begin();
