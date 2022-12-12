@@ -17,7 +17,9 @@
 #include "ESPAsyncWebServer.h"
 #include "OneWire.h"
 #include "DallasTemperature.h"
-#include <TimeLib.h> //TimeLib library is needed https://github.com/PaulStoffregen/Time
+#include <TimeLib.h> //TimeLib library is needed https://github.com/PaulStoffregen/Time !!version 2.5.0
+//is strictly necessary to use Version 2.5.0, in new versions is there error in ip address taking from 
+//esp 32 boards definition 
 #include <NtpClientLib.h> //Include NtpClient library header  https://github.com/gmag11/NtpClient
 #include "passwords.h"
 //#include <NTPClient.h>
@@ -54,6 +56,9 @@ float t1=-99.0, t2=-99.0,t3=-99.0,t4=-99.0;
 String bcgcolor="red";
 //<WIFICLIENT>
 bool CLIENT=1;
+const PROGMEM char *ntpServer = "pool.ntp.org";
+boolean syncEventTriggered = false; // NTP True if a time even has been triggered
+NTPSyncEvent_t ntpEvent; // NTP Last triggered event
 //const char *ssid = "BUArealBridge";  //defined in passwords.h
 //const char *password = "************";
 //</WIFICLIENT>
@@ -71,8 +76,8 @@ String tempWebFin="not connected";
 String head01="<!DOCTYPE html>\n <html>\n <head>\n <meta http-equiv=\"refresh\" content=\"15\" />\n <meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\" /> \n <title>"+deviceName+"</title>\n </head>\n <body style=background-color:";
 //String head01="<!DOCTYPE html>\n <html>\n <head>\n <meta http-equiv=\"refresh\" content=\"15\" />\n <title>"+deviceName+"</title>\n </head>\n <body style=background-color:";
 const String tail03="</h1> \n </body>\n </html>\n";
-const bool Debug=0;
-const bool debug=Debug;
+const bool Debug=0; //for dallas addr
+const bool debug=0;
 //</WEBSERVER>
 //</SETUP>
 
@@ -159,6 +164,7 @@ WiFi.mode(WIFI_STA);
 
 if(CLIENT){
   WiFi.begin(ssid, password);
+  if(debug) Serial.println("WiFi STA connecting");
     while(WiFi.status()!= WL_CONNECTED)
       {
     delay(500);
@@ -185,16 +191,18 @@ digitalWrite(LED, HIGH); //IF WL CONNECTED
 Sensors.begin(); //start comm with Dallas sensor
 
 if(WebServerOn){  
+  if(debug) Serial.println("http server begin...");
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/html",head01+bcgcolor+">\n" +tempWebFin +tail03);
     //request->send(200, "text/plain", temp01);
   }); 
   server.begin();
 }
-
-NTP.begin ("ntp.nic.cz", 1, true);
+if(debug) Serial.println("NTP begin...");
+NTP.begin (ntpServer,1,true,0);
 
 if(WebServer1On){  
+  if(debug) Serial.println("http server1 begin...");
   server1.begin();
 }
 
@@ -209,6 +217,7 @@ void loop(){
     delay(20000);
     if(WiFi.status()!= WL_CONNECTED) ESP.restart();
   }
+  if(debug) Serial.println("in mainLoop connection ok...");
     else digitalWrite(LED, HIGH);
   t1=nactiTeplotuAddr(internal1Adr);
   tempWeb="<h1> \n"+NTP.getTimeDateString()+" Signal: "+WiFi.RSSI()+"    Dev: "+deviceName;
