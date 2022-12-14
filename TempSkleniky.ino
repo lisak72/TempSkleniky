@@ -26,7 +26,7 @@
 
 //<SETUP>
 const byte DallasPin=19;
-const byte DallasPowerPin=33;
+const byte DallasPowerPin=32;
 const byte LED=13; 
 const bool WebServerOn=1;
 const bool WebServer1On=0;
@@ -217,8 +217,7 @@ void loop(){
     delay(20000);
     if(WiFi.status()!= WL_CONNECTED) ESP.restart();
   }
-  if(debug) Serial.println("in mainLoop connection ok...");
-    else digitalWrite(LED, HIGH);
+  else digitalWrite(LED, HIGH);
   t1=nactiTeplotuAddr(internal1Adr);
   tempWeb="<h1> \n"+NTP.getTimeDateString()+" Signal: "+WiFi.RSSI()+"    Dev: "+deviceName;
   delay(10);
