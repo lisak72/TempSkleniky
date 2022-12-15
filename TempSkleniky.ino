@@ -50,7 +50,7 @@ DeviceAddress external3Adr={0x28,0xff,0x36,0xa0,0x42,0x18,0x1,0x43};
 const String Sensor3Place="Teplota koje krajni jih: ";
 const float calibration3=0.0;
 //</SENSOR3>
-int counter;
+int counter=0;
 const float tempLimit=5.0;
 float t1=-99.0, t2=-99.0,t3=-99.0,t4=-99.0;
 String bcgcolor="red";
@@ -107,36 +107,36 @@ String searchAddr()
     addrs+=":";
   }
   return addrs;
- }
+}
 
 void blinkLed(){
   digitalWrite(LED, HIGH);
   delay(20);
   digitalWrite(LED, LOW);
   delay(50);
- }
+}
 
 void setBackgroundColor(float measTemp){
   if(measTemp<tempLimit) bcgcolor="red";
   else bcgcolor="green";
- }
+}
 
- void setBackgroundColor(float measTemp1, float measTemp2){
+void setBackgroundColor(float measTemp1, float measTemp2){
   if((measTemp1<tempLimit)|| (measTemp2<tempLimit)) bcgcolor="red";
   else bcgcolor="green";
- }
+}
 
- void setBackgroundColor(float measTemp1, float measTemp2, float measTemp3){
+void setBackgroundColor(float measTemp1, float measTemp2, float measTemp3){
   if((measTemp1<tempLimit)|| (measTemp2<tempLimit)|| (measTemp3<tempLimit)) bcgcolor="red";
   else bcgcolor="green";
- }
+}
 
- void readingTempCorrect(float tt){
+void readingTempCorrect(float tt){
   if(tt<(-120.0)){
     counter++;
-    if(counter>5) ESP.restart(); 
+    if(counter>10) ESP.restart(); 
   }
- }
+}
  
 void setup(){
 if(Debug){
@@ -165,14 +165,14 @@ WiFi.mode(WIFI_STA);
 if(CLIENT){
   WiFi.begin(ssid, password);
   if(debug) Serial.println("WiFi STA connecting");
-    while(WiFi.status()!= WL_CONNECTED)
-      {
+  while(WiFi.status()!= WL_CONNECTED)
+    {
     delay(500);
     if(debug) Serial.print(".");
     blinkLed();
     counter++;
     if(counter>50) ESP.restart(); 
-      }
+    }
   counter=0;
 }
 
@@ -180,13 +180,13 @@ if(AP){
   WiFi.softAP(APssid,APpassword);
   WiFi.softAPConfig(APIP, APGW, IPMask);
   if(debug) Serial.println(WiFi.softAPIP());
-  }
+}
 
 digitalWrite(LED, HIGH); //IF WL CONNECTED
- if(debug) Serial.println("");
-  if(debug) Serial.println("WiFi connected");
-  if(debug) Serial.println("IP address: ");
-  if(debug) Serial.println(WiFi.localIP());
+if(debug) Serial.println("");
+if(debug) Serial.println("WiFi connected");
+if(debug) Serial.println("IP address: ");
+if(debug) Serial.println(WiFi.localIP());
   
 Sensors.begin(); //start comm with Dallas sensor
 
@@ -222,9 +222,9 @@ void loop(){
   tempWeb="<h1> \n"+NTP.getTimeDateString()+" Signal: "+WiFi.RSSI()+"    Dev: "+deviceName;
   delay(10);
   if(Sensor1){
-      tempWeb+="\n <br>"+Sensor1Place;
-      tempWeb+="     ";
-      tempWeb+=String(t1,2)+" &deg;C"; 
+    tempWeb+="\n <br>"+Sensor1Place;
+    tempWeb+="     ";
+    tempWeb+=String(t1,2)+" &deg;C"; 
     }
  if(Sensor2){
     delay(10);
@@ -249,6 +249,6 @@ void loop(){
     DallasOW.reset_search();
     tempWeb+="</h1> \n <br>"+searchAddr()+"\n <br>"+searchAddr()+"\n <br>"+searchAddr()+"\n <br>"+searchAddr()+"\n <br>"+searchAddr();
   }
-tempWebFin=tempWeb;
-delay(5000);
+  tempWebFin=tempWeb;
+  delay(5000);
   }
